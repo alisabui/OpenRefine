@@ -135,6 +135,7 @@ import com.google.refine.expr.functions.strings.Split;
 import com.google.refine.expr.functions.strings.SplitByCharType;
 import com.google.refine.expr.functions.strings.SplitByLengths;
 import com.google.refine.expr.functions.strings.StartsWith;
+import com.google.refine.expr.functions.strings.ToEnglish;
 import com.google.refine.expr.functions.strings.ToLowercase;
 import com.google.refine.expr.functions.strings.ToTitlecase;
 import com.google.refine.expr.functions.strings.ToUppercase;
@@ -226,6 +227,7 @@ public class ControlFunctionRegistry {
         registerFunction("timeSinceUnixEpochToDate", new TimeSinceUnixEpochToDate());
 
         registerFunction("toUppercase", new ToUppercase());
+        registerFunction("toEnglish", new ToEnglish());
         registerFunction("toLowercase", new ToLowercase());
         registerFunction("toTitlecase", new ToTitlecase());
 
