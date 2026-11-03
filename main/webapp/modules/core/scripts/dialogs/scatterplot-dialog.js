@@ -155,8 +155,9 @@ ScatterplotDialog.prototype._renderMatrix = function() {
                   if (columns[i].name == self._column) div_class += " current_column";
                   table += '<td class="' + div_class + '" colspan="' + (i + 1) + '">' + columns[i].name + '</td>';
                   for (var j = i + 1; j < columns.length; j++) {
-                      var cx = columns[i].name;
-                      var cy = columns[j].name;
+                      // BUG!! i & j need to be swapped
+                      var cx = columns[j].name;
+                      var cy = columns[i].name;
                       
                       var div_class = "scatterplot";
                       var current = cx == self._column || cy == self._column;
