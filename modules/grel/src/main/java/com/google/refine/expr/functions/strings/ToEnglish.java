@@ -7,6 +7,9 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.Properties;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import com.google.refine.expr.EvalError;
 import com.google.refine.grel.ControlFunctionRegistry;
 import com.google.refine.grel.EvalErrorMessage;
@@ -38,7 +41,12 @@ public class ToEnglish implements Function {
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() >= 200 && response.statusCode() < 300) {
-                return response.body();
+                //parse translatedText from the response
+                JsonNode translatedText = new ObjectMapper().readTree(response.body()).path("translatedText");
+                if (translatedText.isTextual()) {
+                    return translatedText.asText();
+                }
+                return new EvalError("Translation response did not contain translatedText.");
             }
             return new EvalError("Translation request failed with status: " + response.statusCode()
                     + " - " + response.body());
