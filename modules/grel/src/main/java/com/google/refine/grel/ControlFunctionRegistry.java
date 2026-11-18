@@ -232,6 +232,7 @@ public class ControlFunctionRegistry {
         registerFunction("toTitlecase", new ToTitlecase());
 
         registerFunction("detectLanguage", new DetectLanguage());
+        registerFunction("toEnglish", new ToEnglish());
 
         registerFunction("hasField", new HasField());
         registerFunction("get", new Get());

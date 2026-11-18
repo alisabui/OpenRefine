@@ -1,43 +1,88 @@
-// copying imports/packages from DetectLanguage.java
 package com.google.refine.expr.functions.strings;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.Properties;
 
-import com.google.refine.clustering.knn.SimilarityDistance;
-import com.google.refine.clustering.knn.VicinoDistance;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import com.google.refine.expr.EvalError;
 import com.google.refine.grel.ControlFunctionRegistry;
 import com.google.refine.grel.EvalErrorMessage;
 import com.google.refine.grel.Function;
-import com.google.refine.grel.FunctionDescription;
-
-// Commenting out import below which may not be relevant
-// import com.google.refine.util.DetectLanguageUtils;
 
 public class ToEnglish implements Function {
-    /**
-     * Read the column that contains the strings to be translated and store in a variable.
-     * For each row in that column, detect the language
-     * From the detected language, translate to English (How?)
-     * Return the translated column as a new column
-    */
 
-    // Need to fix this call method
     @Override
     public Object call(Properties bindings, Object[] args) {
-        if (args != null && args.length == 2 && args[0] instanceof String && args[1] instanceof String) {
-            String s1 = (String) args[0];
-            String s2 = (String) args[1];
-
-            SimilarityDistance levenshteinDistance = new VicinoDistance(new edu.mit.simile.vicino.distances.LevenshteinDistance());
-            return levenshteinDistance.compute(s1, s2);
+        if (args == null || args.length != 1 || !(args[0] instanceof String)) {
+            return new EvalError(EvalErrorMessage.expects_one_string(ControlFunctionRegistry.getFunctionName(this)));
         }
-        return new EvalError(EvalErrorMessage.expects_two_strings(ControlFunctionRegistry.getFunctionName(this)));
-     }
+
+        String s = (String) args[0];
+        String url = "http://127.0.0.1:5000/translate";
+        String payload = "{"
+                + "\"q\":" + toJsonString(s) + ","
+                + "\"source\":\"auto\","
+                + "\"target\":\"en\""
+                + "}";
+
+        try {
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(url))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(payload))
+                    .build();
+
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            if (response.statusCode() >= 200 && response.statusCode() < 300) {
+                //parse translatedText from the response
+                JsonNode translatedText = new ObjectMapper().readTree(response.body()).path("translatedText");
+                if (translatedText.isTextual()) {
+                    return translatedText.asText();
+                }
+                return new EvalError("Translation response did not contain translatedText.");
+            }
+            return new EvalError("Translation request failed with status: " + response.statusCode()
+                    + " - " + response.body());
+        } catch (IOException | InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return new EvalError("ToEnglish translation failed: " + e.getMessage());
+        }
+    }
+
+    // Converts a Java string to a quoted, escaped JSON string literal.
+    private static String toJsonString(String value) {
+        StringBuilder sb = new StringBuilder("\"");
+        for (char c : value.toCharArray()) {
+            switch (c) {
+                case '"' -> sb.append("\\\"");
+                case '\\' -> sb.append("\\\\");
+                case '\n' -> sb.append("\\n");
+                case '\r' -> sb.append("\\r");
+                case '\t' -> sb.append("\\t");
+                case '\b' -> sb.append("\\b");
+                case '\f' -> sb.append("\\f");
+                default -> {
+                    if (c < 0x20) {
+                        sb.append(String.format("\\u%04x", (int) c));
+                    } else {
+                        sb.append(c);
+                    }
+                }
+            }
+        }
+        return sb.append('"').toString();
+    }
 
     @Override
     public String getDescription() {
-        return FunctionDescription.str_to_english();
+        return "Converts a string to English.";
     }
 
     @Override
