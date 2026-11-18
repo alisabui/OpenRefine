@@ -227,7 +227,6 @@ public class ControlFunctionRegistry {
         registerFunction("timeSinceUnixEpochToDate", new TimeSinceUnixEpochToDate());
 
         registerFunction("toUppercase", new ToUppercase());
-        registerFunction("toEnglish", new ToEnglish());
         registerFunction("toLowercase", new ToLowercase());
         registerFunction("toTitlecase", new ToTitlecase());
 
